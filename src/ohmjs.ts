@@ -2,7 +2,7 @@ import ohm, { Node } from 'ohm-js'
 import { promises as fs } from 'fs'
 import { stringify } from 'querystring';
 
-class PatentNode {
+export class PatentNode {
     constructor(
         public type: string,
         public content: string | PatentNode[],
@@ -31,13 +31,13 @@ const patentMarkdownGrammar = `
 
         descHeader = "#" sp* "【書類名】" sp* "明細書" block+
 
-        invention = inventionHeader inventionContent
+        invention = inventionHeader inventionContent blank*
         inventionHeader = "##" sp* "【発明の名称】" sp* nl
         inventionContent = block+
 
-        techField = techFieldHeader techFieldContent
+        techField = techFieldHeader techFieldContent blank*
         techFieldHeader = "##" sp* "【技術分野】" sp* nl
-        techFieldContent = block+
+        techFieldContent = block+ 
 
         bgArt = bgArtHeader bgArtContent
         bgArtHeader = "##" sp* "【背景技術】" sp* nl
@@ -119,25 +119,27 @@ function parseMarkdownBlocks(str: string) {
                 "description"),
         descHeader: (_1: any, _2: any, _3: any, _4: any, _5: any, _6: any) =>
             new PatentNode("h1", "【書類名】明細書", "document-name"),
-        invention: (inventionHeader: any, inventionContent: any) =>
+        invention: (inventionHeader: any, inventionContent: any, _:any) =>
             new PatentNode("section", [inventionHeader.blocks(), inventionContent.blocks()], "invention-title"),
         inventionHeader: (_0: any, _1: any, _2: any, _3: any, _4: any) =>
             new PatentNode("h2", "【発明の名称】"),
         inventionContent: (blocks: any) =>
             new PatentNode("p", blocks.children.map((c: any) => c.blocks()).filter((c: any) => c.type === 'p')),
-        techField: (techFieldHeader: any, techFieldContent: any) =>
-            new PatentNode("section", [techFieldHeader.blocks(), techFieldContent.blocks()], "technical-field"),
+        techField: (techFieldHeader: any, techFieldContent: any, _:any) =>
+            new PatentNode("section", [techFieldHeader.blocks(), ...techFieldContent.blocks()], "technical-field"),
         techFieldHeader: (_0: any, _1: any, _2: any, _3: any, _4: any) =>
             new PatentNode("h2", "【技術分野】"),
+        techFieldContent: (blocks: any) =>
+            blocks.children.map((c: any) => c.blocks()).filter((c: any) => c.type === 'p'),
         bgArt: (bgArtHeader: Node, bgArtContent: Node) =>
             new PatentNode("section", [
                 bgArtHeader.blocks(),
-                bgArtContent.blocks()], "background-art"),
+                ...bgArtContent.blocks()],
+                "background-art"),
         bgArtHeader: (_0: any, _1: any, _2: any, _3: any, _4: any) =>
             new PatentNode("h2", "【背景技術】"),
-        bgArtContent: (block: any) => {
-            return block.children.map((c: any) => c.blocks()).filter((c: any) => c.type === 'p')
-        },
+        bgArtContent: (block: any) =>
+            block.children.map((c: any) => c.blocks()).filter((c: any) => c.type === 'p'),
         citations: (citationsHeader: any, _0: any, patentCitations: any, _1: any, nonPatentCitations: any) =>
             new PatentNode("section", [citationsHeader.blocks(), patentCitations.blocks(), nonPatentCitations.blocks()], "citations"),
         citationsHeader: (_0: any, _1: any, _2: any, _3: any) =>
@@ -165,6 +167,7 @@ function parseMarkdownBlocks(str: string) {
             return this.sourceString;
         },
     });
+
     const match = parser.grammar.match(str);
     console.log(match.succeeded());
     if (match.succeeded()) {

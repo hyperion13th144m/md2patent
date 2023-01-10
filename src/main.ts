@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { parseMarkdown } from './ohmjs';
+import { parseMarkdown, PatentNode } from './ohmjs';
 
 const tagMap = {
     '【書類名】 明細書': '',
@@ -27,25 +27,28 @@ const tagMap = {
 async function main() {
     const src = path.join(__dirname, '../test/test.md');
     const dst = path.join(__dirname, '../test/test.html');
+    const tmpl = path.join(__dirname, '../test/template.html');
     const md = await fs.readFile(src, 'utf-8');
-    const html = await parseMarkdown(md);
-    viewTree(html);
-    //await fs.writeFile(dst, html);
+    const result = await parseMarkdown(md);
+    const html = viewTree(result);
+    await saveAsHTML(html, dst, tmpl);
 }
 
-function viewTree(tree: any, depth: number = 0) {
-    if (tree === undefined) return;
-    console.log(tree);
-
-    if (Array.isArray(tree.content)) {
-        tree.content.forEach((element: any) => {
-            viewTree(element, depth + 1);
-        });
-    } else if (typeof tree.content === 'string') {
-        console.log(`_`.repeat(depth * 2) + tree.content);
+function viewTree(tree: PatentNode, depth: number = 0): string {
+    if (typeof tree.content === 'string') {
+        return `<${tree.type} class="${tree.className}">${tree.content}</${tree.type}>`;
+    } else if (Array.isArray(tree.content)) {
+        const i = tree.content.map((element: PatentNode) => viewTree(element));
+        return `<${tree.type} class="${tree.className}">${i.join("")}</${tree.type}>`;
     } else {
-        console.log(tree);
+        return "";
     }
+}
+
+async function saveAsHTML(content: string, outPath: string, templatePath: string){
+    const tmpl = await fs.readFile(templatePath, 'utf-8');
+    const html = tmpl.replace("##CONTENT##", content);
+    await fs.writeFile(outPath, html, 'utf-8');
 }
 
 main()
