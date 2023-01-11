@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { parseMarkdown, PatentNode } from './ohmjs';
+import { parseMarkdown } from './parser';
+import { PatentNode } from './operation';
 
 const tagMap = {
     '【書類名】 明細書': '',
