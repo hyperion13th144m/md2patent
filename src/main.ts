@@ -42,11 +42,12 @@ function viewTree(tree: PatentNode, depth: number = 0): string {
         const i = tree.content.map((element: PatentNode) => viewTree(element));
         return `<${tree.type} class="${tree.className}">${i.join("")}</${tree.type}>`;
     } else {
+        console.log(tree);
         return "";
     }
 }
 
-async function saveAsHTML(content: string, outPath: string, templatePath: string){
+async function saveAsHTML(content: string, outPath: string, templatePath: string) {
     const tmpl = await fs.readFile(templatePath, 'utf-8');
     const html = tmpl.replace("##CONTENT##", content);
     await fs.writeFile(outPath, html, 'utf-8');
