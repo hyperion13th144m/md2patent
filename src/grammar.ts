@@ -1,7 +1,7 @@
 export const patentMarkdownGrammar = `
     PatentMarkdown {
         doc = blank* description claims abstract
-        description = descHeader invention techField bgArt citations summaryOfInvention
+        description = descHeader invention techField bgArt citations summaryOfInvention summaryOfDrawings? descriptionOfEmbodiments industrialApplicability? refSigns?
         claims = blank*
         abstract = blank*
 
@@ -37,11 +37,29 @@ export const patentMarkdownGrammar = `
         techSolutionHeader = "###" sp* "【課題を解決するための手段】" blank*
         techSolutionContent = block+
         advantageousEffect = advantageousEffectHeader blank* advantageousEffectContent
-        advantageousEffectHeader = "###" sp* "【発明の効果】" blank*
+        advantageousEffectHeader = "#"+ sp* "【発明の効果】" blank*
         advantageousEffectContent = block+
+
+        summaryOfDrawings =  summaryOfDrawingsHeader blank* summaryOfDrawingsList blank*
+        summaryOfDrawingsHeader = "##" sp* "【図面の簡単な説明】" blank*
+        summaryOfDrawingsList = bullet+ 
+
+        descriptionOfEmbodiments = descriptionOfEmbodimentsHeader descriptionOfEmbodimentsContent blank*
+        descriptionOfEmbodimentsHeader = "##" sp* "【発明を実施するための形態】" blank*
+        descriptionOfEmbodimentsContent = block2+
+        embodimentsExample = "#"+ sp* "【実施例】" blank*
+
+        industrialApplicability =  industrialApplicabilityHeader blank* industrialApplicabilityContent blank*
+        industrialApplicabilityHeader = "##" sp* "【産業上の利用可能性】" blank*
+        industrialApplicabilityContent = block+ 
+ 
+        refSigns =  refSignsHeader blank* refSignsContent blank*
+        refSignsHeader = "##" sp* "【符号の説明】" blank*
+        refSignsContent = block+ 
 
         bullet = "* " rest (~"*" ~blank rest)*
         block =  blank | para | endline
+        block2 =  blank | para | endline | embodimentsExample
         blank = sp* nl  // blank line has only newline
         para = line+ //paragraph is just multiple consecutive lines
         endline = (~nl any)+ end

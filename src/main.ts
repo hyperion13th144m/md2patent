@@ -31,8 +31,12 @@ async function main() {
     const tmpl = path.join(__dirname, '../test/template.html');
     const md = await fs.readFile(src, 'utf-8');
     const result = await parseMarkdown(md);
-    const html = viewTree(result);
-    await saveAsHTML(html, dst, tmpl);
+    if (result != null) {
+        const html = viewTree(result);
+        await saveAsHTML(html, dst, tmpl);
+    } else {
+        console.log("parse failed.");
+    }
 }
 
 function viewTree(tree: PatentNode, depth: number = 0): string {
@@ -42,7 +46,6 @@ function viewTree(tree: PatentNode, depth: number = 0): string {
         const i = tree.content.map((element: PatentNode) => viewTree(element));
         return `<${tree.type} class="${tree.className}">${i.join("")}</${tree.type}>`;
     } else {
-        console.log(tree);
         return "";
     }
 }
